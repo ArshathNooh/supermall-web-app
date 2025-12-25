@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Mall - Shop Management System</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="screen active">
+        <div class="login-container">
+            <div class="login-card">
+                <h1 class="app-logo">🛍️ Super Mall</h1>
+                <p class="app-subtitle">Shop Management System</p>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="loginEmail">Email</label>
+                        <input type="email" id="loginEmail" required autocomplete="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <input type="password" id="loginPassword" required autocomplete="current-password">
+                    </div>
+                    <div id="loginError" class="error-message"></div>
+                    <button type="submit" class="btn btn-primary btn-block">Login</button>
+                    <div class="form-footer">
+                        <p>Don't have an account? <a href="#" id="showRegister">Register</a></p>
+                    </div>
+                </form>
+                <form id="registerForm" class="hidden">
+                    <div class="form-group">
+                        <label for="registerEmail">Email</label>
+                        <input type="email" id="registerEmail" required autocomplete="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">Password</label>
+                        <input type="password" id="registerPassword" required autocomplete="new-password" minlength="6">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerRole">Role</label>
+                        <select id="registerRole" required>
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div id="registerError" class="error-message"></div>
+                    <button type="submit" class="btn btn-primary btn-block">Register</button>
+                    <div class="form-footer">
+                        <p>Already have an account? <a href="#" id="showLogin">Login</a></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Screen -->
+    <div id="dashboardScreen" class="screen">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>🛍️ Super Mall</h2>
+                <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-page="dashboard">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" data-page="shops">
+                    <span class="nav-icon">🏪</span>
+                    <span>Shops</span>
+                </a>
+                <a href="#" class="nav-item" data-page="products">
+                    <span class="nav-icon">📦</span>
+                    <span>Products</span>
+                </a>
+                <a href="#" class="nav-item" data-page="offers">
+                    <span class="nav-icon">🎁</span>
+                    <span>Offers</span>
+                </a>
+                <a href="#" class="nav-item" data-page="categories" id="navCategories">
+                    <span class="nav-icon">🏷️</span>
+                    <span>Categories</span>
+                </a>
+                <a href="#" class="nav-item" data-page="floors" id="navFloors">
+                    <span class="nav-icon">🏢</span>
+                    <span>Floors</span>
+                </a>
+                <a href="#" class="nav-item" data-page="reports" id="navReports">
+                    <span class="nav-icon">📈</span>
+                    <span>Reports</span>
+                </a>
+                <a href="#" class="nav-item" data-page="settings">
+                    <span class="nav-icon">⚙️</span>
+                    <span>Settings</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="mobile-menu-toggle" id="mobileMenuToggle">☰</button>
+                    <h1 id="pageTitle">Dashboard</h1>
+                </div>
+                <div class="header-right">
+                    <button class="header-btn" id="notificationsBtn" title="Notifications">
+                        🔔
+                        <span class="badge" id="notificationBadge">0</span>
+                    </button>
+                    <div class="user-menu">
+                        <button class="user-profile-btn" id="userProfileBtn">
+                            <span id="userEmail">User</span>
+                            <span id="userRole" class="user-role">user</span>
+                        </button>
+                        <div class="user-dropdown" id="userDropdown">
+                            <a href="#" id="logoutBtn">Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="content-area" id="contentArea">
+                <!-- Dashboard Page -->
+                <div id="pageDashboard" class="page active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">🏪</div>
+                            <div class="stat-info">
+                                <h3 id="totalShops">0</h3>
+                                <p>Total Shops</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">📦</div>
+                            <div class="stat-info">
+                                <h3 id="totalProducts">0</h3>
+                                <p>Total Products</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">🎁</div>
+                            <div class="stat-info">
+                                <h3 id="totalOffers">0</h3>
+                                <p>Active Offers</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">🏷️</div>
+                            <div class="stat-info">
+                                <h3 id="totalCategories">0</h3>
+                                <p>Categories</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-section">
+                        <h2>Recent Shops</h2>
+                        <div id="recentShops" class="table-container"></div>
+                    </div>
+                </div>
+
+                <!-- Shops Page -->
+                <div id="pageShops" class="page">
+                    <div class="page-header">
+                        <div class="page-actions">
+                            <input type="text" id="shopSearch" class="search-input" placeholder="Search shops...">
+                            <select id="shopFilterFloor" class="filter-select">
+                                <option value="">All Floors</option>
+                            </select>
+                            <select id="shopFilterCategory" class="filter-select">
+                                <option value="">All Categories</option>
+                            </select>
+                            <button class="btn btn-primary" id="addShopBtn" style="display: none;">+ Add Shop</button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table" id="shopsTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Floor</th>
+                                    <th>Category</th>
+                                    <th>Location</th>
+                                    <th>Contact</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="shopsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Products Page -->
+                <div id="pageProducts" class="page">
+                    <div class="page-header">
+                        <div class="page-actions">
+                            <input type="text" id="productSearch" class="search-input" placeholder="Search products...">
+                            <select id="productFilterCategory" class="filter-select">
+                                <option value="">All Categories</option>
+                            </select>
+                            <input type="number" id="productFilterMinPrice" class="filter-input" placeholder="Min Price">
+                            <input type="number" id="productFilterMaxPrice" class="filter-input" placeholder="Max Price">
+                            <button class="btn btn-secondary" id="compareProductsBtn">Compare Products</button>
+                            <button class="btn btn-primary" id="addProductBtn" style="display: none;">+ Add Product</button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table" id="productsTable">
+                            <thead>
+                                <tr>
+                                    <th><input type="checkbox" id="selectAllProducts"></th>
+                                    <th>Name</th>
+                                    <th>Shop</th>
+                                    <th>Category</th>
+                                    <th>Price</th>
+                                    <th>Brand</th>
+                                    <th>In Stock</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Offers Page -->
+                <div id="pageOffers" class="page">
+                    <div class="page-header">
+                        <div class="page-actions">
+                            <input type="text" id="offerSearch" class="search-input" placeholder="Search offers...">
+                            <button class="btn btn-primary" id="addOfferBtn" style="display: none;">+ Add Offer</button>
+                        </div>
+                    </div>
+                    <div class="cards-grid" id="offersGrid"></div>
+                </div>
+
+                <!-- Categories Page -->
+                <div id="pageCategories" class="page">
+                    <div class="page-header">
+                        <button class="btn btn-primary" id="addCategoryBtn" style="display: none;">+ Add Category</button>
+                    </div>
+                    <div class="cards-grid" id="categoriesGrid"></div>
+                </div>
+
+                <!-- Floors Page -->
+                <div id="pageFloors" class="page">
+                    <div class="page-header">
+                        <button class="btn btn-primary" id="addFloorBtn" style="display: none;">+ Add Floor</button>
+                    </div>
+                    <div class="cards-grid" id="floorsGrid"></div>
+                </div>
+
+                <!-- Reports Page -->
+                <div id="pageReports" class="page">
+                    <div class="reports-container">
+                        <div class="report-card">
+                            <h3>Shop Distribution by Floor</h3>
+                            <div id="floorDistributionChart"></div>
+                        </div>
+                        <div class="report-card">
+                            <h3>Shop Distribution by Category</h3>
+                            <div id="categoryDistributionChart"></div>
+                        </div>
+                        <div class="report-card">
+                            <h3>Product Price Analysis</h3>
+                            <div id="priceAnalysisChart"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Page -->
+                <div id="pageSettings" class="page">
+                    <div class="settings-container">
+                        <div class="settings-section">
+                            <h3>Profile Settings</h3>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="settingsEmail" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label>Role</label>
+                                <input type="text" id="settingsRole" disabled>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <!-- Shop Modal -->
+    <div id="shopModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="shopModalTitle">Add Shop</h3>
+                <button class="modal-close" id="closeShopModal">&times;</button>
+            </div>
+            <form id="shopForm">
+                <input type="hidden" id="shopId">
+                <div class="form-group">
+                    <label for="shopName">Shop Name *</label>
+                    <input type="text" id="shopName" required>
+                </div>
+                <div class="form-group">
+                    <label for="shopDescription">Description</label>
+                    <textarea id="shopDescription" rows="3"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="shopFloor">Floor *</label>
+                        <select id="shopFloor" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="shopCategory">Category *</label>
+                        <select id="shopCategory" required></select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="shopLocation">Location</label>
+                    <input type="text" id="shopLocation">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="shopContact">Contact</label>
+                        <input type="text" id="shopContact">
+                    </div>
+                    <div class="form-group">
+                        <label for="shopEmail">Email</label>
+                        <input type="email" id="shopEmail">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="shopOpeningHours">Opening Hours</label>
+                    <input type="text" id="shopOpeningHours" placeholder="e.g., 9:00 AM - 9:00 PM">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelShopBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="productModalTitle">Add Product</h3>
+                <button class="modal-close" id="closeProductModal">&times;</button>
+            </div>
+            <form id="productForm">
+                <input type="hidden" id="productId">
+                <div class="form-group">
+                    <label for="productName">Product Name *</label>
+                    <input type="text" id="productName" required>
+                </div>
+                <div class="form-group">
+                    <label for="productDescription">Description</label>
+                    <textarea id="productDescription" rows="3"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="productShop">Shop *</label>
+                        <select id="productShop" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="productCategory">Category</label>
+                        <input type="text" id="productCategory">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="productPrice">Price *</label>
+                        <input type="number" id="productPrice" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="productBrand">Brand</label>
+                        <input type="text" id="productBrand">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="productFeatures">Features (comma-separated)</label>
+                    <input type="text" id="productFeatures" placeholder="e.g., Wireless, Bluetooth, Waterproof">
+                </div>
+                <div class="form-group">
+                    <label for="productImageUrl">Image URL</label>
+                    <input type="url" id="productImageUrl">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="productInStock" checked>
+                        In Stock
+                    </label>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelProductBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Offer Modal -->
+    <div id="offerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="offerModalTitle">Add Offer</h3>
+                <button class="modal-close" id="closeOfferModal">&times;</button>
+            </div>
+            <form id="offerForm">
+                <input type="hidden" id="offerId">
+                <div class="form-group">
+                    <label for="offerTitle">Title *</label>
+                    <input type="text" id="offerTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="offerDescription">Description</label>
+                    <textarea id="offerDescription" rows="3"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="offerShop">Shop *</label>
+                        <select id="offerShop" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="offerDiscount">Discount *</label>
+                        <input type="number" id="offerDiscount" step="0.01" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="offerDiscountType">Discount Type</label>
+                    <select id="offerDiscountType">
+                        <option value="percentage">Percentage (%)</option>
+                        <option value="fixed">Fixed Amount</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="offerValidFrom">Valid From</label>
+                        <input type="date" id="offerValidFrom">
+                    </div>
+                    <div class="form-group">
+                        <label for="offerValidUntil">Valid Until</label>
+                        <input type="date" id="offerValidUntil">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="offerTerms">Terms & Conditions</label>
+                    <textarea id="offerTerms" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="offerIsActive" checked>
+                        Active
+                    </label>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelOfferBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Compare Products Modal -->
+    <div id="compareModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>Compare Products</h3>
+                <button class="modal-close" id="closeCompareModal">&times;</button>
+            </div>
+            <div id="compareProductsContainer" class="compare-container"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../firebase/firebaseConfig.js"></script>
+    <script src="../services/auth.js"></script>
+    <script src="../services/shops.js"></script>
+    <script src="../services/products.js"></script>
+    <script src="../services/offers.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
+
